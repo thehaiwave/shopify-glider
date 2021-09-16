@@ -78,7 +78,7 @@ function App() {
     }, [apiData]);
 
     useEffect(() => {
-        const data = JSON.parse(localStorage["likedData"]);
+        const data = JSON.parse(localStorage["likedData"] || []);
         setLikedApiDataItems(data);
     }, []);
 
@@ -87,9 +87,6 @@ function App() {
         e.preventDefault();
         localStorage["likedData"] = JSON.stringify(likedApiDataItems);
     };
-
-    console.log("API", apiData);
-    console.log("LIKES", likedApiDataItems);
 
     return (
         <div>

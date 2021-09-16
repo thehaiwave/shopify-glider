@@ -78,8 +78,12 @@ function App() {
     }, [apiData]);
 
     useEffect(() => {
-        const data = JSON.parse(localStorage["likedData"] || []);
-        setLikedApiDataItems(data);
+        try {
+            const data = JSON.parse(localStorage["likedData"] || []);
+            setLikedApiDataItems(data);
+        } catch {
+            console.log("likedData empty");
+        }
     }, []);
 
     window.onbeforeunload = (event) => {

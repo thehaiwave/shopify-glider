@@ -84,6 +84,27 @@ function App() {
         }
     };
 
+    //We are not running an external backend for this application, it's just the UI.
+    //Because of this, the website has no memory of past requests and so we need to move
+    //arrays around to make new fetched items from the API match up with whatever liked data
+    //we had in the local storage previously, while also making sure we are able
+    //to sync up any like removals. The initial cross referencing of both of these
+    //arrays when we make new GET requests to the API handles most of these concerns,
+    //but there are some edge cases that causes liked items to get duplicated, deleted, or become out of sync
+    //with the currently fetched items when we like them.
+    //Ideally, we would keep just a reference to each API item instead of copying it but, again,
+    //there's no external backend to keep track of that so it's just us and Javascript.
+    //I'm pretty sure there's some redundancies between this useEffect and one of the handler functions
+    //for like removal, but keeping track of past liked items like this is kinda jank in the first place
+    //so I'm not even gonna bother.
+    //Anyway, this use effect is critical. While the handler functions update the fetched items' liked property,
+    //this code right here makes sure that we keep any past liked data while preventing duplicates, since if you set
+    //the 'liked' property to be false in one of the newly fetched items, you'd run into the issue that
+    //it would still appear as liked since it was that way before the change, and we WANT to keep past data, just
+    //not the one that has been changed to unliked, so we filter the data, then take out any data whose 'liked'
+    //property is false, and then we delete data from the liked items only if the keys are duplicate in both the past liked data and the newly fetched data
+    //, since they can only appear once in both arrays if the item has just been liked, 
+    //and will appear twice if it WAS liked but has been unliked
     useEffect(() => {
         if (skipRun) setSkipRun(false);
         if (!skipRun) {

@@ -21,7 +21,11 @@ const Card = (props: Props) => {
 
             <div className="cardContent">
                 <h3>
-                    {new Date(props.date).toLocaleString("en-us", {
+                    {new Date(
+                        `${props.date.split("-")[1]}-${
+                            props.date.split("-")[2]
+                        }-${props.date.split("-")[0]}`
+                    ).toLocaleString("en-us", {
                         month: "long",
                         year: "numeric",
                         day: "numeric",
@@ -30,8 +34,12 @@ const Card = (props: Props) => {
                 <h2>{props.title}</h2>
                 <p>{props.description}</p>
                 <div className="cardActionSection">
-                    <button>
-                        <a href={props.hdIMageUrl} target="_blank">
+                    <button className="cardButton">
+                        <a
+                            href={props.hdIMageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
                             <img
                                 src={
                                     require("../assets/icons/maximize-2.svg")
@@ -42,7 +50,10 @@ const Card = (props: Props) => {
                         </a>
                     </button>
 
-                    <button onClick={() => props.onClickLike()}>
+                    <button
+                        className="cardButton likeButton likedButton"
+                        onClick={() => props.onClickLike()}
+                    >
                         {props.liked ? (
                             <img
                                 src={
@@ -53,6 +64,7 @@ const Card = (props: Props) => {
                             />
                         ) : (
                             <img
+                                className="cardButton likedButton likeButton"
                                 src={
                                     require("../assets/icons/heart.svg").default
                                 }

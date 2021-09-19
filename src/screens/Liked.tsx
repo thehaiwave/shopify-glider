@@ -29,7 +29,7 @@ const Liked = (props: Props) => {
                     })}
                 </div>
             ) : (
-                <h2>You haven't liked anything :(</h2>
+                <h2 className="noneMessage">You haven't liked anything :(</h2>
             )}
         </>
     );

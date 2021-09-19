@@ -1,9 +1,11 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
+import axios from "axios";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import "./App.css";
 
 import Home from "./screens/Home";
 import Liked from "./screens/Liked";
+import NoMatch from "./screens/NoMatch";
 
 import { ApiObject } from "./types/ApiTypes";
 
@@ -13,8 +15,12 @@ function App() {
     const [apiData, setApiData] = useState<ApiObject[]>([]);
     const [likedApiDataItems, setLikedApiDataItems] = useState<ApiObject[]>([]);
     const [dateRange, setDateRange] = useState({
-        startDate: "2021-08-14",
-        endDate: "2021-08-15",
+        startDate: new Date(new Date().setDate(new Date().getDate() - 3))
+            .toISOString()
+            .substring(0, 10),
+        endDate: new Date(new Date().setDate(new Date().getDate() - 1))
+            .toISOString()
+            .substring(0, 10),
     });
 
     const onChangeStartDate = (e: ChangeEvent<HTMLInputElement>) => {
@@ -25,7 +31,7 @@ function App() {
         setDateRange({ ...dateRange, endDate: e.target.value });
     };
 
-    const handleItemLike = (k: string) => {
+    const syncFetchedDataToStoredData = (k: string) => {
         setApiData(
             apiData.map((item: ApiObject) =>
                 item.date === k ? { ...item, liked: !item.liked } : item
@@ -37,44 +43,59 @@ function App() {
         setLikedApiDataItems(
             likedApiDataItems.filter((item: ApiObject) => item.date !== k)
         );
-        if (apiData.length > 0) handleItemLike(k);
+        if (apiData.length > 0) syncFetchedDataToStoredData(k);
     };
 
     const fetchApi = async (e: any) => {
-        if (Date.parse(dateRange.startDate) > Date.parse(dateRange.endDate)) {
-            alert("Please enter a valid start date and end date range");
+        e.preventDefault();
+        e.currentTarget.blur();
+        if (
+            Date.parse(dateRange.startDate) > Date.parse(dateRange.endDate) ||
+            !dateRange.startDate ||
+            !dateRange.endDate
+        ) {
+            alert("Please select a valid date range");
         } else {
-            e.preventDefault();
-            e.currentTarget.blur();
-            setStatus("loading");
-            return await fetch(
-                `https://api.nasa.gov/planetary/apod?start_date=${dateRange.startDate}&end_date=${dateRange.endDate}&api_key=kp8iztvB9W6tQVPTbh6JuByUVi15YERnFbhJPKVA`
-            )
-                .then((response) => response.json())
-                .then((result) =>
-                    setApiData(
-                        result.map(
-                            (item: ApiObject, i: number) => ({
-                                ...item,
-                                liked: likedApiDataItems.some(
-                                    (likedItem: ApiObject) =>
-                                        item.date === likedItem.date
-                                ),
-                            }),
-                            setStatus("loaded")
-                        )
+            try {
+                setStatus("loading");
+                await axios
+                    .get(
+                        `https://api.nasa.gov/planetary/apod?start_date=${dateRange.startDate}&end_date=${dateRange.endDate}&api_key=kp8iztvB9W6tQVPTbh6JuByUVi15YERnFbhJPKVA`
                     )
-                )
-                .catch((error) => setStatus("error"));
+                    .then((response) => response.data)
+                    .then((res) =>
+                        setApiData(
+                            res.map(
+                                (item: ApiObject, i: number) => ({
+                                    ...item,
+                                    liked: likedApiDataItems.some(
+                                        (likedItem: ApiObject) =>
+                                            item.date === likedItem.date
+                                    ),
+                                }),
+                                setStatus("loaded")
+                            )
+                        )
+                    );
+            } catch (err) {
+                setStatus("error");
+                console.log("ERROR FETCHING API", err);
+            }
         }
     };
 
     useEffect(() => {
         if (skipRun) setSkipRun(false);
-        if (!skipRun)
-            setLikedApiDataItems(
-                apiData.filter((item: ApiObject) => item.liked)
+        if (!skipRun) {
+            let tempFilter = apiData.filter((item: ApiObject) => item.liked);
+            const ids = [...likedApiDataItems, ...tempFilter].map(
+                (o) => o.date
             );
+            const filtered = [...likedApiDataItems, ...tempFilter].filter(
+                ({ date }, i) => !ids.includes(date, i + 1)
+            );
+            setLikedApiDataItems(filtered);
+        }
     }, [apiData]);
 
     useEffect(() => {
@@ -115,6 +136,19 @@ function App() {
                     </div>
 
                     <Switch>
+                        <Route exact path="/">
+                            <Home
+                                data={apiData}
+                                onClickLike={(i: string) =>
+                                    handleLikedItemUnlike(i)
+                                }
+                                onChangeStartDate={onChangeStartDate}
+                                onChangeEndDate={onChangeEndDate}
+                                selectedDates={dateRange}
+                                handleFetchClick={(e: any) => fetchApi(e)}
+                                status={status}
+                            />
+                        </Route>
                         <Route path="/liked">
                             <Liked
                                 data={likedApiDataItems}
@@ -123,16 +157,9 @@ function App() {
                                 }
                             />
                         </Route>
-                        <Route path="/">
-                            <Home
-                                data={apiData}
-                                onClickLike={(i: string) => handleItemLike(i)}
-                                onChangeStartDate={onChangeStartDate}
-                                onChangeEndDate={onChangeEndDate}
-                                selectedDates={dateRange}
-                                handleFetchClick={(e: any) => fetchApi(e)}
-                                status={status}
-                            />
+
+                        <Route path="*">
+                            <NoMatch />
                         </Route>
                     </Switch>
                 </Router>

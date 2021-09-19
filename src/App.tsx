@@ -46,7 +46,7 @@ function App() {
         if (apiData.length > 0) syncFetchedDataToStoredData(k);
     };
 
-    const fetchApi = async (e: any) => {
+    const fetchApi = async (e: ChangeEvent<HTMLInputElement>) => {
         e.preventDefault();
         e.currentTarget.blur();
         if (
@@ -145,7 +145,9 @@ function App() {
                                 onChangeStartDate={onChangeStartDate}
                                 onChangeEndDate={onChangeEndDate}
                                 selectedDates={dateRange}
-                                handleFetchClick={(e: any) => fetchApi(e)}
+                                handleFetchClick={(
+                                    e: ChangeEvent<HTMLInputElement>
+                                ) => fetchApi(e)}
                                 status={status}
                             />
                         </Route>
